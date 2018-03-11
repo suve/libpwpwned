@@ -112,12 +112,6 @@ pwquality_get_int_value(pwquality_settings_t *pwq, int setting, int *value);
 int
 pwquality_get_str_value(pwquality_settings_t *pwq, int setting, const char **value);
 
-/* Generate a random password of entropy_bits entropy and check it according to
- * the settings. */
-int
-pwquality_generate(pwquality_settings_t *pwq, int entropy_bits,
-        char **password);
-
 /* Check the password according to the settings.
  * It returns either score <0-100>, negative error number,
  * and possibly also auxiliary error information that must be

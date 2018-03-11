@@ -27,7 +27,7 @@ libpwquality_la_LDFLAGS = -no-undefined $(libpwquality_version_script) \
 
 libpwquality_la_LIBADD = $(LIBCRACK) $(LIBINTL)
 
-libpwquality_la_SOURCES = generate.c check.c settings.c error.c
+libpwquality_la_SOURCES = check.c settings.c error.c
 
 if HAVE_PAM
   pam_pwquality_la_LDFLAGS = -no-undefined -avoid-version -module
@@ -43,10 +43,6 @@ pwscore_SOURCES = pwscore.c
 
 pwscore_LDADD = libpwquality.la $(LIBINTL)
 
-pwmake_SOURCES = pwmake.c
-
-pwmake_LDADD = libpwquality.la $(LIBINTL)
-
 lib_LTLIBRARIES = libpwquality.la
 
 if HAVE_PAM
@@ -57,7 +53,7 @@ endif
 
 secureconf_DATA = pwquality.conf
 
-bin_PROGRAMS = pwscore pwmake
+bin_PROGRAMS = pwscore
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pwquality.pc
