@@ -28,13 +28,10 @@ hexdigit(const int digit) {
         return 'a' + (digit - 10);
 }
 
-static char*
-hash_password(const char *const plaintext) {
-    // SHA_DIGEST_LENGTH is in bytes.
-    // We want to return a hex digest, which is double the length.
-    // Add one extra space for NUL byte.
-    static char buffer[SHA_DIGEST_LENGTH * 2 + 1];
+#define HASH_BUFFER_LENGTH (SHA_DIGEST_LENGTH * 2 + 1)
 
+static void
+hash_password(const char *const plaintext, char *const buffer) {
     // We put the hash digest starting at SHA_DIGEST_LENGTH
     // so we can operate on the same buffer during the conver-to-hex phase.
     SHA1(plaintext, strlen(plaintext), buffer + SHA_DIGEST_LENGTH);
@@ -44,30 +41,23 @@ hash_password(const char *const plaintext) {
         buffer[i*2+1] = hexdigit(buffer[SHA_DIGEST_LENGTH + i] % 16);
     }
     buffer[SHA_DIGEST_LENGTH*2] = '\0';
-    
-    return buffer;
 }
 
+#define RANGE_URL            "https://api.pwnedpasswords.com/range/"
+#define RANGE_URL_LENGTH     strlen(RANGE_URL)
+#define RANGE_PREFIX_LENGTH  5
+#deifne APIURL_BUFFER_SIZE   (RANGE_URL_LENGTH + RANGE_PREFIX_LENGTH + 1)
 
-#define RANGE_PREFIX_LENGTH 5
+static void
+generate_api_url(const char *const pwdhash, char *const buffer) {
+    strcpy(buffer, RANGE_URL);
+    const size_t len = RANGE_URL_LENGTH;
 
-static char*
-generate_api_url(const char *const pwdhash) {
-    static char url[48] = { 
-        'h','t','t','p','s',':','/','/',
-        'a','p','i','.',
-        'p','w','n','e','d','p','a','s','s','w','o','r','d','s','.',
-        'c','o','m','/',
-        'r','a','n','g','e','/',
-        '\0'
-    };
-    static const size_t len = strlen(url);
-
-    for(int i = 0; i < RANGE_PREFIX_LENGTH; ++i) url[len+i] = pwdhash[i];
-    url[len + RANGE_PREFIX_LENGTH] = '\0';
-
-    return url;
+    for(int i = 0; i < RANGE_PREFIX_LENGTH; ++i) buffer[len+i] = pwdhash[i];
+    buffer[len + RANGE_PREFIX_LENGTH] = '\0';
 }
+
+#define ERROR(x) { err = (x); goto on_error; }
 
 /* Check if the password appears in the Pwned Passwords database.
  * Return value can be one of:
@@ -77,20 +67,24 @@ generate_api_url(const char *const pwdhash) {
  */
 int
 pwpwned_check(const char *password) {
-    // We don't need to do this until after curl has been init, but whatever.
-    const char *const hash = hash_password(password);
+    int err = PWNED_ERR_SUCCESS;
 
     CURL *curl = curl_easy_init();
-    if(curl == NULL) return PWNED_ERR_CURL;
+    if(curl == NULL) ERROR(PWNED_ERR_CURL);
 
-    CURLcode err = curl_easy_setopt(curl, CURL_SETOPT_URL, generate_api_url(hash));
-    if(err == CURLE_OUT_OF_MEMORY) goto on_error;
+    char hash[HASH_BUFFER_LENGTH];
+    hash_password(plaintext, hash);
+    char api_url[APIURL_BUFFER_SIZE];
+    generate_api_url(hash, api_url)
+    
+    CURLcode err = curl_easy_setopt(curl, CURL_SETOPT_URL, api_url);
+    if(err == CURLE_OUT_OF_MEMORY) ERROR(PWNED_ERR_NOMEM);
 
     err = curl_easy_setopt(curl, CURL_SETOPT_USERAGENT, PWPWNED_USER_AGENT);
-    if(err == CURLE_OUT_OF_MEMORY) goto on_error;
+    if(err == CURLE_OUT_OF_MEMORY) ERROR(PWNED_ERR_NOMEM);
 
 on_error:
-    curl_easy_cleanup(curl);
+    if(curl != NULL) curl_easy_cleanup(curl);
     return err;
 }
 
