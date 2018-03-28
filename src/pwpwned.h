@@ -14,6 +14,8 @@
 extern "C" {
 #endif
 
+#define PWPWNED_USER_AGENT "libpwpwned v.0.1 by suve"
+
 #define PWNED_ERR_SUCCESS   0 /* implicit, not used in the library code */
 #define PWNED_ERR_NOMEM    -1
 #define PWNED_ERR_CURL     -2
@@ -21,28 +23,12 @@ extern "C" {
 #define PWNED_ERR_CONNECT  -4
 #define PWNED_ERR_APIERR   -5
 
-/* Check the password according to the settings.
- * It returns either score <0-100>, negative error number,
- * and possibly also auxiliary error information that must be
- * passed into pwquality_strerror() function.
- * The old password is optional and can be NULL.
- * The user is used for checking the password against user name
- * and potentially other passwd information and can be NULL.
- * The auxerror can be NULL - in that case the auxiliary error information
- * is not returned.
- * Not passing the *auxerror into pwquality_strerror() can lead to memory leaks.
- * The score depends on PWQ_SETTING_MIN_LENGTH. If it is set higher,
- * the score for the same passwords will be lower. */ 
-int
-pwpwned_check(const char *password, void **auxerror);
 
-/* Translate the error code and auxiliary message into a localized
- * text message.
- * If buf is NULL it uses an internal static buffer which
- * makes the function non-reentrant in that case.
- * The returned pointer is not guaranteed to point to the buf. */
-const char *
-pwquality_strerror(char *buf, size_t len, int errcode, void *auxerror);
+int
+pwpwned_check(const char *password);
+
+const char*
+pwpwned_strerror(const int errcode, char *const buf, const size_t len);
 
 #ifdef __cplusplus
 }

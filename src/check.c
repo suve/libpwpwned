@@ -62,10 +62,10 @@ generate_api_url(const char *const pwdhash) {
         '\0'
     };
     static const size_t len = strlen(url);
-    
+
     for(int i = 0; i < RANGE_PREFIX_LENGTH; ++i) url[len+i] = pwdhash[i];
     url[len + RANGE_PREFIX_LENGTH] = '\0';
-    
+
     return url;
 }
 
@@ -76,12 +76,22 @@ generate_api_url(const char *const pwdhash) {
  *   X  < 0 : an error occurred
  */
 int
-pwpwned_check(
-    const char *password,
-    void **auxerror
-) {
+pwpwned_check(const char *password) {
+    // We don't need to do this until after curl has been init, but whatever.
+    const char *const hash = hash_password(password);
+
     CURL *curl = curl_easy_init();
     if(curl == NULL) return PWNED_ERR_CURL;
+
+    CURLcode err = curl_easy_setopt(curl, CURL_SETOPT_URL, generate_api_url(hash));
+    if(err == CURLE_OUT_OF_MEMORY) goto on_error;
+
+    err = curl_easy_setopt(curl, CURL_SETOPT_USERAGENT, PWPWNED_USER_AGENT);
+    if(err == CURLE_OUT_OF_MEMORY) goto on_error;
+
+on_error:
+    curl_easy_cleanup(curl);
+    return err;
 }
 
 /*
