@@ -20,6 +20,35 @@
 #include "pwquality.h"
 
 
+static char
+hexdigit(const int digit) {
+    if(digit < 10)
+        return '0' + digit;
+    else
+        return 'a' + (digit - 10);
+}
+
+static char*
+hash_password(const char *const plaintext) {
+    // SHA_DIGEST_LENGTH is in bytes.
+    // We want to return a hex digest, which is double the length.
+    // Add one extra space for NUL byte.
+    static char buffer[SHA_DIGEST_LENGTH * 2 + 1];
+
+    // We put the hash digest starting at SHA_DIGEST_LENGTH
+    // so we can operate on the same buffer during the conver-to-hex phase.
+    SHA1(plaintext, strlen(plaintext), buffer + SHA_DIGEST_LENGTH);
+    
+    for(int i = 0; i < SHA_DIGEST_LENGTH; ++i) {
+        buffer[i*2  ] = hexdigit(buffer[SHA_DIGEST_LENGTH + i] / 16);
+        buffer[i*2+1] = hexdigit(buffer[SHA_DIGEST_LENGTH + i] % 16);
+    }
+    buffer[SHA_DIGEST_LENGTH*2] = '\0';
+    
+    return buffer;
+}
+
+
 #define RANGE_PREFIX_LENGTH 5
 
 static char*
