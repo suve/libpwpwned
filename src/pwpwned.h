@@ -1,67 +1,54 @@
 /*
- * libpwquality internal header
+ * libpwpwned main API code header
  *
- * Copyright (c) Red Hat, Inc, 2011,2015
- * Copyright (c) Tomas Mraz <tm@t8m.info>, 2011, 2015
+ * Copyright (c) Red Hat, Inc, 2011
+ * Copyright (c) Tomas Mraz <tm@t8m.info>, 2011
  *
  * See the end of the file for the License Information
  */
 
-#ifndef PWQPRIVATE_H
-#define PWQPRIVATE_H
+#ifndef PWPWNED_H
+#define PWPWNED_H
 
-#include "pwquality.h"
-
-struct pwquality_settings {
-        int diff_ok;
-        int min_length;
-        int dig_credit;
-        int up_credit;
-        int low_credit;
-        int oth_credit;
-        int min_class;
-        int max_repeat;
-        int max_class_repeat;
-        int max_sequence;
-        int gecos_check;
-        int dict_check;
-        int user_check;
-        int enforcing;
-        char *bad_words;
-        char *dict_path;
-};
-
-struct setting_mapping {
-        const char *name;
-        int id;
-        int type;
-};
-
-#define PWQ_DEFAULT_DIFF_OK      1
-#define PWQ_DEFAULT_MIN_LENGTH   8
-#define PWQ_DEFAULT_DIG_CREDIT   0
-#define PWQ_DEFAULT_UP_CREDIT    0
-#define PWQ_DEFAULT_LOW_CREDIT   0
-#define PWQ_DEFAULT_OTH_CREDIT   0
-#define PWQ_DEFAULT_DICT_CHECK   1
-#define PWQ_DEFAULT_USER_CHECK   1
-#define PWQ_DEFAULT_ENFORCING    1
-
-#define PWQ_TYPE_INT             1
-#define PWQ_TYPE_STR             2
-#define PWQ_TYPE_SET             3
-
-#define PWQ_BASE_MIN_LENGTH      6 /* used when lower than this value of min len is set */
-#define PWQ_NUM_CLASSES          4
-#define PWQ_NUM_GENERATION_TRIES 3 /* how many times to try to generate the random password if it fails the check */
-#define PWQ_MIN_WORD_LENGTH      4
-#define PWQ_MAX_PASSWD_BUF_LEN   16300
-
-#ifndef PWQUALITY_DEFAULT_CFGFILE
-#define PWQUALITY_DEFAULT_CFGFILE "/etc/security/pwquality.conf"
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#endif /* PWQPRIVATE_H */
+#define PWNED_ERR_SUCCESS   0 /* implicit, not used in the library code */
+#define PWNED_ERR_NOMEM    -1
+#define PWNED_ERR_CURL     -2
+#define PWNED_ERR_RESOLV   -3
+#define PWNED_ERR_CONNECT  -4
+#define PWNED_ERR_APIERR   -5
+
+/* Check the password according to the settings.
+ * It returns either score <0-100>, negative error number,
+ * and possibly also auxiliary error information that must be
+ * passed into pwquality_strerror() function.
+ * The old password is optional and can be NULL.
+ * The user is used for checking the password against user name
+ * and potentially other passwd information and can be NULL.
+ * The auxerror can be NULL - in that case the auxiliary error information
+ * is not returned.
+ * Not passing the *auxerror into pwquality_strerror() can lead to memory leaks.
+ * The score depends on PWQ_SETTING_MIN_LENGTH. If it is set higher,
+ * the score for the same passwords will be lower. */ 
+int
+pwpwned_check(const char *password, void **auxerror);
+
+/* Translate the error code and auxiliary message into a localized
+ * text message.
+ * If buf is NULL it uses an internal static buffer which
+ * makes the function non-reentrant in that case.
+ * The returned pointer is not guaranteed to point to the buf. */
+const char *
+pwquality_strerror(char *buf, size_t len, int errcode, void *auxerror);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* PWPWNED_H */
 
 /*
  * Redistribution and use in source and binary forms, with or without
