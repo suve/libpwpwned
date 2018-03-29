@@ -3,7 +3,7 @@
  *
  * See the end of the file for Copyright and License Information
  */
- 
+
 #include "config.h"
 
 #include <stdlib.h>
@@ -31,14 +31,15 @@ hexdigit(const int digit) {
         return 'a' + (digit - 10);
 }
 
-#define HASH_BUFFER_LENGTH (SHA_DIGEST_LENGTH * 2 + 1)
+#define HASH_LENGTH        (SHA_DIGEST_LENGTH * 2)
+#define HASH_BUFFER_LENGTH (HASH_LENGTH + 1)
 
 static void
 hash_password(const char *const plaintext, char *const buffer) {
     // We put the hash digest starting at SHA_DIGEST_LENGTH
     // so we can operate on the same buffer during the conver-to-hex phase.
     SHA1(plaintext, strlen(plaintext), buffer + SHA_DIGEST_LENGTH);
-    
+
     for(int i = 0; i < SHA_DIGEST_LENGTH; ++i) {
         buffer[i*2  ] = hexdigit(buffer[SHA_DIGEST_LENGTH + i] / 16);
         buffer[i*2+1] = hexdigit(buffer[SHA_DIGEST_LENGTH + i] % 16);
@@ -68,26 +69,62 @@ struct Response {
     char buffer[RESPONSE_BUFFER_SIZE];
 };
 
-struct Response*
+static struct Response*
 alloc_response(void) {
     struct Response *resp = malloc(sizeof(struct Response));
     if(resp != NULL) {
         resp->written = 0;
         resp->buffer[0] = '\0';
     }
-    
+
     return resp;
 }
 
-size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
+static size_t
+write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
     struct Response *resp = (struct Response*)userdata;
     const size_t total_size = size * nmemb;
-    
+
     memcpy(&resp->buffer[resp->written], ptr, total_size);
     resp->buffer[resp->written + total_size] = '\0';
     resp->written += total_size;
-    
+
     return total_size;
+}
+
+#define RESPONSE_HASH_TERMINATOR ':'
+#define RESPONSE_HASH_SEPARATOR  '\n'
+
+static int
+process_response(const struct Response *const resp, const char *hash) {
+    // The API response does not contain full hashes;
+    // the range prefix is dropped, as it's the same for each hash.
+    hash += RANGE_PREFIX_LENGTH;
+    
+    size_t start = 0;
+    size_t curr = 0;
+    
+    while(start < resp->written) {
+        curr = start + (HASH_BUFFER_LENGTH - RANGE_PREFIX_LENGTH);
+        if(resp->buffer[curr] != RESPONSE_HASH_TERMINATOR) return -1;
+        
+        if(memcmp(hash, resp->buffer + start, (HASH_BUFFER_LENGTH - RANGE_PREFIX_LENGTH)) != 0) {
+            while(resp->buffer[curr] != RESPONSE_HASH_SEPARATOR && resp->buffer[curr] != '\0') ++curr;
+            start = curr;
+            continue;
+        }
+        
+        int occurences = 0;
+        while(1) {
+            int char_ = resp->buffer[++curr];
+            if(char_ == RESPONSE_HASH_SEPARATOR || char_ == '\0') break;
+            
+            occurences = (occurences * 10) + (char_ - '0');
+        }
+        return occurences;
+    }
+    
+    return 0;
 }
 
 
@@ -102,10 +139,9 @@ size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
 int
 pwpwned_check(const char *password) {
     int err = PWNED_ERR_SUCCESS;
-    
-    char *buffer = alloc_response_buffer();
-    if(buffer == NULL) error(PWNED_ERR_NOMEM);
-    unsigned long int written = 0;
+
+    struct Response resp = alloc_response();
+    if(resp == NULL) error(PWNED_ERR_NOMEM);
 
     CURL *curl = curl_easy_init();
     if(curl == NULL) ERROR(PWNED_ERR_CURL);
@@ -114,18 +150,37 @@ pwpwned_check(const char *password) {
     hash_password(plaintext, hash);
     char api_url[APIURL_BUFFER_SIZE];
     generate_api_url(hash, api_url)
-    
+
     CURLcode err = curl_easy_setopt(curl, CURL_SETOPT_URL, api_url);
     if(err == CURLE_OUT_OF_MEMORY) ERROR(PWNED_ERR_NOMEM);
 
     err = curl_easy_setopt(curl, CURL_SETOPT_USERAGENT, PWPWNED_USER_AGENT);
     if(err == CURLE_OUT_OF_MEMORY) ERROR(PWNED_ERR_NOMEM);
-    
+
     curl_easy_setopt(curl, CURL_SETOPT_WRITEFUNCTION, &write_callback);
+
+    err = curl_easy_perform(curl);
+    switch(err) {
+        case CURLE_SUCCESS:
+            ERROR(process_response(resp, hash));
+
+        case CURLE_COULDNT_RESOLVE_PROXY:
+        case CURLE_COULDNT_RESOLVE_HOST:
+            ERROR(PWNED_ERR_RESOLV);
+
+        case CURLE_COULDNT_CONNECT:
+            ERROR(PWNED_ERR_CONNECT);
+
+        case CURLE_OUT_OF_MEMORY:
+            ERROR(PWNED_ERR_NOMEM);
+
+        default:
+            ERROR(PWNED_ERR_CURL);
+    }
 
 on_error:
     if(curl != NULL) curl_easy_cleanup(curl);
-    if(buffer != NULL) free(buffer);
+    if(resp != NULL) free(resp);
     return err;
 }
 
