@@ -17,7 +17,10 @@
 #include <curl/curl.h>
 #include <openssl/sha.h>
 
-#include "pwquality.h"
+#include "pwpwned.h"
+
+
+#define PWPWNED_USER_AGENT  ("libpwpwned v." VERSION " by suve")
 
 
 static char
@@ -57,6 +60,37 @@ generate_api_url(const char *const pwdhash, char *const buffer) {
     buffer[len + RANGE_PREFIX_LENGTH] = '\0';
 }
 
+
+#define RESPONSE_BUFFER_SIZE (48 * 1024)
+
+struct Response {
+    size_t written;
+    char buffer[RESPONSE_BUFFER_SIZE];
+};
+
+struct Response*
+alloc_response(void) {
+    struct Response *resp = malloc(sizeof(struct Response));
+    if(resp != NULL) {
+        resp->written = 0;
+        resp->buffer[0] = '\0';
+    }
+    
+    return resp;
+}
+
+size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
+    struct Response *resp = (struct Response*)userdata;
+    const size_t total_size = size * nmemb;
+    
+    memcpy(&resp->buffer[resp->written], ptr, total_size);
+    resp->buffer[resp->written + total_size] = '\0';
+    resp->written += total_size;
+    
+    return total_size;
+}
+
+
 #define ERROR(x) { err = (x); goto on_error; }
 
 /* Check if the password appears in the Pwned Passwords database.
@@ -68,6 +102,10 @@ generate_api_url(const char *const pwdhash, char *const buffer) {
 int
 pwpwned_check(const char *password) {
     int err = PWNED_ERR_SUCCESS;
+    
+    char *buffer = alloc_response_buffer();
+    if(buffer == NULL) error(PWNED_ERR_NOMEM);
+    unsigned long int written = 0;
 
     CURL *curl = curl_easy_init();
     if(curl == NULL) ERROR(PWNED_ERR_CURL);
@@ -82,9 +120,12 @@ pwpwned_check(const char *password) {
 
     err = curl_easy_setopt(curl, CURL_SETOPT_USERAGENT, PWPWNED_USER_AGENT);
     if(err == CURLE_OUT_OF_MEMORY) ERROR(PWNED_ERR_NOMEM);
+    
+    curl_easy_setopt(curl, CURL_SETOPT_WRITEFUNCTION, &write_callback);
 
 on_error:
     if(curl != NULL) curl_easy_cleanup(curl);
+    if(buffer != NULL) free(buffer);
     return err;
 }
 

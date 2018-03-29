@@ -14,8 +14,6 @@
 extern "C" {
 #endif
 
-#define PWPWNED_USER_AGENT "libpwpwned v.0.1 by suve"
-
 #define PWNED_ERR_SUCCESS   0 /* implicit, not used in the library code */
 #define PWNED_ERR_NOMEM    -1
 #define PWNED_ERR_CURL     -2
