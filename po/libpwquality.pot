@@ -36,33 +36,6 @@ msgstr ""
 msgid "BAD PASSWORD: %s"
 msgstr ""
 
-#: src/pwscore.c:22
-#, c-format
-msgid "Usage: %s [user]\n"
-msgstr ""
-
-#: src/pwscore.c:23
-#, c-format
-msgid ""
-"       The command reads the password to be scored from the standard input.\n"
-msgstr ""
-
-#: src/pwscore.c:53 src/pwscore.c:61 src/pwscore.c:67
-#, c-format
-msgid "Error: %s\n"
-msgstr ""
-
-#: src/pwscore.c:53
-msgid "Could not obtain the password to be scored"
-msgstr ""
-
-#: src/pwscore.c:75
-#, c-format
-msgid ""
-"Password quality check failed:\n"
-" %s\n"
-msgstr ""
-
 #: src/pwmake.c:22
 #, c-format
 msgid "Usage: %s <entropy-bits>\n"

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([libpwquality], [1.4.0])
+AC_INIT([libpwpwned], [1.4.0])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip -Wall])
 AC_PREREQ(2.61)
@@ -98,7 +98,7 @@ if test "$enable_pam" != "no"; then
       fail=0
       AC_CHECK_LIB([pam], [pam_start], [], [fail=1])
       test $fail = 1 &&
-        AC_MSG_ERROR([You must install the PAM development package in order to compile libpwquality])
+        AC_MSG_ERROR([You must install the PAM development package in order to compile libpwpwned])
   fi
 fi
 
@@ -118,36 +118,6 @@ AC_ARG_WITH(sconfigdir,
 	AS_HELP_STRING([--with-sconfigdir=DIR],[path to PAM conf files @<:@default=$sysconfdir/security@:>@]),
 	SCONFIGDIR=$enableval, SCONFIGDIR=$sysconfdir/security)
 AC_SUBST(SCONFIGDIR)
-
-AC_ARG_ENABLE([python-bindings],
-              AC_HELP_STRING([--enable-python-bindings],
-                             [enable Python bindings (default: yes)]),
-              [enable_python_bindings=$enableval],
-              enable_python_bindings=yes)
-AM_CONDITIONAL(BUILD_PYTHON_BINDINGS, test x"$enable_python_bindings" = xyes)
-
-AC_ARG_WITH(python-binary,
-            [  --with-python-binary=python3    python binary name with which modules should be built],
-            PYTHONBINARY=$withval, [PYTHONBINARY=python])
-AC_SUBST(PYTHONBINARY)
-
-AC_ARG_WITH(python-rev,
-            [  --with-python-rev=2.7    version of python for which modules should be built],
-            PYTHONREV=$withval,[
-            AC_MSG_CHECKING([python version])
-            [PYTHONREV=`$PYTHONBINARY -c "import sys;sys.stdout.write('%s.%s' % (sys.version_info[0], sys.version_info[1]))"`]
-            AC_MSG_RESULT($PYTHONREV)
-            ])
-AC_SUBST(PYTHONREV)
-
-AC_ARG_WITH(pythonsitedir,
-            [  --with-pythonsitedir=DIR    directory of the python site packages @<:@default=$libdir/python$PYTHONREV/site-packages@:>@],
-            PYTHONSITEDIR=$withval,[
-            AC_MSG_CHECKING([python site directory])
-            [PYTHONSITEDIR=$libdir/python$PYTHONREV/site-packages]
-            AC_MSG_RESULT($PYTHONSITEDIR)
-            ])
-AC_SUBST(PYTHONSITEDIR)
 
 AC_ARG_WITH([randomdev], AS_HELP_STRING([--with-randomdev=(<path>|yes)],[use specified random device instead of /dev/urandom]), opt_randomdev=$withval)
 if test "$opt_randomdev" = yes -o -z "$opt_randomdev"; then
@@ -172,6 +142,6 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN
 
 dnl Files to be created from when we run configure
-AC_CONFIG_FILES([Makefile libpwquality.spec src/Makefile src/pwquality.pc po/Makefile.in python/Makefile
-                 doc/Makefile doc/man/Makefile python/setup.py])
+AC_CONFIG_FILES([Makefile libpwpwned.spec src/Makefile src/pwpwned.pc po/Makefile.in
+                 doc/Makefile doc/man/Makefile])
 AC_OUTPUT

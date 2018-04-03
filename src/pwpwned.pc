@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: pwpwned
+Description: Check a password against the Have I Been Pwned database
+Version: 1.4.0
+Libs: -L${libdir} -lpwpwned
+Libs.private: -lssl -lcurl
+Cflags: -I${includedir}

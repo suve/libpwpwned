@@ -10,50 +10,42 @@ securelibdir = @SECUREDIR@
 
 secureconfdir = @SCONFIGDIR@
 
-EXTRA_DIST = libpwquality.map pwquality.conf pwquality.pc
+EXTRA_DIST = libpwpwned.map pwpwned.conf pwpwned.pc
 
-include_HEADERS = pwquality.h
-
-noinst_HEADERS = pwqprivate.h
+include_HEADERS = pwpwned.h
 
 if HAVE_LD_VERSION_SCRIPT
-  libpwquality_version_script = -Wl,--version-script=$(srcdir)/libpwquality.map
+  libpwpwned_version_script = -Wl,--version-script=$(srcdir)/libpwpwned.map
 else
-  libpwquality_version_script =
+  libpwpwned_version_script =
 endif
 
-libpwquality_la_LDFLAGS = -no-undefined $(libpwquality_version_script) \
+libpwpwned_la_LDFLAGS = -no-undefined $(libpwpwned_version_script) \
 	-version-info @PWQUALITY_LT_CURRENT@:@PWQUALITY_LT_REVISION@:@PWQUALITY_LT_AGE@
 
-libpwquality_la_LIBADD = $(LIBCRACK) $(LIBINTL) $(SSH2_LIBS) $(CURL_LIBS)
+libpwpwned_la_LIBADD = $(LIBCRACK) $(LIBINTL) $(SSH2_LIBS) $(CURL_LIBS)
 
-libpwquality_la_SOURCES = check.c settings.c error.c
+libpwpwned_la_SOURCES = check.c error.c
 
 if HAVE_PAM
-  pam_pwquality_la_LDFLAGS = -no-undefined -avoid-version -module
-  pam_pwquality_la_LIBADD = libpwquality.la $(PAM_LIBS) $(LIBINTL)
-  pam_pwquality_la_SOURCES = pam_pwquality.c
+  pam_pwpwned_la_LDFLAGS = -no-undefined -avoid-version -module
+  pam_pwpwned_la_LIBADD = libpwpwned.la $(PAM_LIBS) $(LIBINTL)
+  pam_pwpwned_la_SOURCES = pam_pwpwned.c
 else
-  pam_pwquality_la_LDFLAGS =
-  pam_pwquality_la_LIBADD =
-  pam_pwquality_la_SOURCES =
+  pam_pwpwned_la_LDFLAGS =
+  pam_pwpwned_la_LIBADD =
+  pam_pwpwned_la_SOURCES =
 endif
 
-pwscore_SOURCES = pwscore.c
-
-pwscore_LDADD = libpwquality.la $(LIBINTL)
-
-lib_LTLIBRARIES = libpwquality.la
+lib_LTLIBRARIES = libpwpwned.la
 
 if HAVE_PAM
-  securelib_LTLIBRARIES = pam_pwquality.la
+  securelib_LTLIBRARIES = pam_pwpwned.la
 else
   securelib_LTLIBRARIES =
 endif
 
-secureconf_DATA = pwquality.conf
-
-bin_PROGRAMS = pwscore
+secureconf_DATA = pwpwned.conf
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = pwquality.pc
+pkgconfig_DATA = pwpwned.pc

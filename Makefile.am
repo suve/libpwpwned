@@ -7,20 +7,17 @@
 AUTOMAKE_OPTIONS = 1.9 gnu dist-bzip2 check-news
 
 SUBDIRS = po src doc
-if BUILD_PYTHON_BINDINGS
-SUBDIRS += python
-endif
 
 CLEANFILES = *~
 
 M4_FILES = m4/libtool.m4
 
-EXTRA_DIST = config.rpath $(M4_FILES) libpwquality.spec libpwquality.spec.in
+EXTRA_DIST = config.rpath $(M4_FILES) libpwpwned.spec libpwpwned.spec.in
 
 ACLOCAL_AMFLAGS = -I m4
 
 tag: Makefile
-	hg tag libpwquality-@PACKAGE_VERSION@
+	hg tag libpwpwned-@PACKAGE_VERSION@
 
 force-tag: Makefile
-	hg tag -f libpwquality-@PACKAGE_VERSION@
+	hg tag -f libpwpwned-@PACKAGE_VERSION@

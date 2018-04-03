@@ -1,0 +1,7 @@
+LIBPWQUALITY_1.0 {
+  global:
+    pwpwned_check;
+    pwpwned_strerror;
+  local:
+    *;
+};

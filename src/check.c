@@ -47,9 +47,9 @@ hash_password(const char *const plaintext, char *const buffer) {
 }
 
 #define RANGE_URL            "https://api.pwnedpasswords.com/range/"
-#define RANGE_URL_LENGTH     strlen(RANGE_URL)
+#define RANGE_URL_LENGTH     37
 #define RANGE_PREFIX_LENGTH  5
-#deifne APIURL_BUFFER_SIZE   (RANGE_URL_LENGTH + RANGE_PREFIX_LENGTH + 1)
+#define APIURL_BUFFER_SIZE   (RANGE_URL_LENGTH + RANGE_PREFIX_LENGTH + 1)
 
 static void
 generate_api_url(const char *const pwdhash, char *const buffer) {
@@ -139,28 +139,28 @@ int
 pwpwned_check(const char *password) {
     int err = PWNED_ERR_SUCCESS;
 
-    struct Response resp = alloc_response();
-    if(resp == NULL) error(PWNED_ERR_NOMEM);
+    struct Response *resp = alloc_response();
+    if(resp == NULL) ERROR(PWNED_ERR_NOMEM);
 
     CURL *curl = curl_easy_init();
     if(curl == NULL) ERROR(PWNED_ERR_CURL);
 
     char hash[HASH_BUFFER_LENGTH];
-    hash_password(plaintext, hash);
+    hash_password(password, hash);
     char api_url[APIURL_BUFFER_SIZE];
-    generate_api_url(hash, api_url)
+    generate_api_url(hash, api_url);
 
-    CURLcode err = curl_easy_setopt(curl, CURL_SETOPT_URL, api_url);
-    if(err == CURLE_OUT_OF_MEMORY) ERROR(PWNED_ERR_NOMEM);
+    CURLcode curle = curl_easy_setopt(curl, CURLOPT_URL, api_url);
+    if(curle == CURLE_OUT_OF_MEMORY) ERROR(PWNED_ERR_NOMEM);
 
-    err = curl_easy_setopt(curl, CURL_SETOPT_USERAGENT, PWPWNED_USER_AGENT);
-    if(err == CURLE_OUT_OF_MEMORY) ERROR(PWNED_ERR_NOMEM);
+    curle = curl_easy_setopt(curl, CURLOPT_USERAGENT, PWPWNED_USER_AGENT);
+    if(curle == CURLE_OUT_OF_MEMORY) ERROR(PWNED_ERR_NOMEM);
 
-    curl_easy_setopt(curl, CURL_SETOPT_WRITEFUNCTION, &write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write_callback);
 
-    err = curl_easy_perform(curl);
-    switch(err) {
-        case CURLE_SUCCESS:
+    curle = curl_easy_perform(curl);
+    switch(curle) {
+        case CURLE_OK:
             ERROR(process_response(resp, hash));
 
         case CURLE_COULDNT_RESOLVE_PROXY:
