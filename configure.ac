@@ -6,6 +6,9 @@ AC_PREREQ(2.61)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_HOST
 
+m4_include([m4/libcurl.m4])
+m4_include([m4/m4_ax_check_openssl.m4])
+
 dnl We don't build with srcdir != builddir at present; the Python
 dnl bindings fail
 echo \#buildapi-variable-no-builddir > /dev/null
@@ -152,13 +155,18 @@ if test "$opt_randomdev" = yes -o -z "$opt_randomdev"; then
 fi
 AC_DEFINE_UNQUOTED(CONF_PATH_RANDOMDEV, "$opt_randomdev", [Random device path.])
 
-dnl Check for cracklib
-AC_CHECK_HEADERS([crack.h],
-      AC_CHECK_LIB([crack], [FascistCheck], LIBCRACK="-lcrack", LIBCRACK=""))
-if test x$LIBCRACK = x ; then
-    AC_MSG_ERROR([No or unusable cracklib library])
+LIBCURL_CHECK_CONFIG([yes], [7.0.0], [], [
+    AC_MSG_ERROR([No or unusable libcurl])
+])
+
+
+#AC_CHECK_HEADERS([openssl/sha.h],
+#    AC_CHECK_LIB([ssl], ['SHA1'], LIBSSL='-lssl', LIBSSL=''))
+AX_CHECK_OPENSSL(LIBSSL='-lssl', LIBSSL='')
+if test x$LIBSSL = x ; then
+    AC_MSG_ERROR([No or unusable openssl library])
 fi
-AC_SUBST([LIBCRACK])
+
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN

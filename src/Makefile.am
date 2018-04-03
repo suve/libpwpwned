@@ -25,7 +25,7 @@ endif
 libpwquality_la_LDFLAGS = -no-undefined $(libpwquality_version_script) \
 	-version-info @PWQUALITY_LT_CURRENT@:@PWQUALITY_LT_REVISION@:@PWQUALITY_LT_AGE@
 
-libpwquality_la_LIBADD = $(LIBCRACK) $(LIBINTL)
+libpwquality_la_LIBADD = $(LIBCRACK) $(LIBINTL) $(SSH2_LIBS) $(CURL_LIBS)
 
 libpwquality_la_SOURCES = check.c settings.c error.c
 
